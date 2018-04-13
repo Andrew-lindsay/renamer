@@ -1,0 +1,5 @@
+@echo off
+setlocal
+
+FOR /F "eol= tokens=* delims=. " %i in (names.txt) do
+@echo %i
