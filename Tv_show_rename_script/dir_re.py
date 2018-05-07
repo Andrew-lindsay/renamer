@@ -38,10 +38,12 @@ while True:
 
     for t in file_list:
         name = file_list[count]
-        if (count + 1 > 9 ):
-            name = str(count + 1) + " - " + name[int(left_offset):(len(name) - int(right_offset))] + "_s0" + season + "e" + str(count + 1) + "." + file_ending
-        else:
-            name = str(count + 1) + " - " + name[int(left_offset):(len(name) - int(right_offset))] + "_s0" + season + "e0" + str(count + 1) + "." + file_ending
+
+        ep_str = "e" if count + 1 > 9 else "e0"
+
+        name = str(count + 1) + " - " + name[int(left_offset):(len(name) - int(right_offset))] + "_s0" + season + ep_str \
+               + str(count + 1) + "." + file_ending
+
         print(t + " <-> " + name)
         names.append(name)
         print("")
