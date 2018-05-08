@@ -48,6 +48,8 @@ def main():
         print(_file)
 
     while True:
+        # TODO: add command line arg code
+
         yes_1 = ""
         yes_2 = ""
         left_offset = raw_input("Enter number of characters from left to remove:")
@@ -56,6 +58,7 @@ def main():
         count = 0
         names = []
 
+        # returns list of names after they have been renamed
         new_names = change_file_names(file_list, season, left_offset, right_offset, file_ending)
 
         print("Do you want to replace names")
