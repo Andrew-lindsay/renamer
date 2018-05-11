@@ -3,6 +3,15 @@ import sys
 import argparse
 
 
+def take_command_line():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--season', '-s', action='store', help='Enter season of show', type=int)
+    parser.add_argument('--left', '-l', action='store', help='Amount to cut from left', type=int)
+    parser.add_argument('--right', '-r', action='store', help='Amount to cut from right', type=int)
+    parser.add_argument('--ending', '-e', action='store', help='type of files to alter e.g mkv', type=int)
+    args_parsed = parser.parse_args()
+    return args_parsed.season, args_parsed.ending, args_parsed.left, args_parsed.right
+
 def change_file_names(file_list, season, left_offset, right_offset, file_ending):
     """alters file names and prints old and new to screen"""
     names = []
@@ -95,4 +104,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    print(take_command_line())
