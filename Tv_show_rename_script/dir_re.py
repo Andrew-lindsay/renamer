@@ -1,5 +1,6 @@
 import os
 import sys
+import argparse
 
 
 def change_file_names(file_list, season, left_offset, right_offset, file_ending):
@@ -7,17 +8,23 @@ def change_file_names(file_list, season, left_offset, right_offset, file_ending)
     names = []
     for count, old_name in enumerate(file_list, 1):
 
-        # if count is
+        # if count is greater than nine don't place 0 in front
         ep_str = "e" if count > 9 else "e0"
 
-        new_name = str(count) + " - " + old_name[int(left_offset):(len(old_name) - int(right_offset))] + "_s0" + season + ep_str \
+        new_name = str(count) + " - " + old_name[left_offset:(len(old_name) - right_offset)] + "_s0" + season + ep_str \
                + str(count) + "." + file_ending
 
         print(old_name + " <-> " + new_name)
         names.append(new_name)
-        print("")
 
     return names
+
+
+def commit_name_change(file_list, new_names, cwd):
+    """ Takes old names of files sorted and mapping to new names of files"""
+    for x in range(0, len(new_names)):
+        print(file_list[x] + " <-> " + new_names[x])
+        os.rename(cwd + "\\" + file_list[x], cwd + "\\" + new_names[x])
 
 
 def main():
@@ -47,16 +54,23 @@ def main():
     for _file in file_list:
         print(_file)
 
-    while True:
-        # TODO: add command line arg code
+    # TODO: fix
+    # if not len(sys.argv) is 0:
+    #     for arg in sys.argv:
+    #         pass
 
+    while True:
         yes_1 = ""
         yes_2 = ""
-        left_offset = raw_input("Enter number of characters from left to remove:")
-        right_offset = raw_input("Enter number of characters from right to remove:")
-        season = raw_input("Enter season number:")
-        count = 0
-        names = []
+
+        while True:
+            try:
+                left_offset = int(raw_input("Enter number of characters from left to remove:"))
+                right_offset = int(raw_input("Enter number of characters from right to remove:"))
+                season = str(int(raw_input("Enter season number:")))
+                break
+            except ValueError:
+                print("please enter a numerical numbers only")
 
         # returns list of names after they have been renamed
         new_names = change_file_names(file_list, season, left_offset, right_offset, file_ending)
@@ -66,11 +80,9 @@ def main():
 
         if yes_1 == "y":
             yes_2 = raw_input("Are you sure?,\nEnter y/n: ")
-
             if yes_2 == "y":
-                for x in range(0, len(new_names)):
-                    print(file_list[x] + " <-> " + new_names[x])
-                    os.rename(cwd + "\\" + file_list[x], cwd + "\\" + new_names[x])
+                commit_name_change(file_list, new_names, cwd)
+                raw_input("Re-naming complete press any key to continue... ")
                 sys.exit(0)
             else:
                 continue
