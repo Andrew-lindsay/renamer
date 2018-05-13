@@ -135,10 +135,7 @@ def main():
                     raw_input("Re-naming complete press any key to continue... ")
                     sys.exit(0)
 
-            # else:
-            #     if yes_or_no("Exit? y/n: "):
-            #         sys.exit(0)
-
+            # on second pass when args have been past let them enter left right from command line
             args_passed = False
     except:
         pass
