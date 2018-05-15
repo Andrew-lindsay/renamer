@@ -41,7 +41,7 @@ def change_file_names(file_list, season, left_offset, right_offset, file_ending)
         # if count is greater than nine don't place 0 in front
         ep_str = "e" if count > 9 else "e0"
 
-        new_name = str(count) + " - " + old_name[left_offset:(len(old_name) - right_offset)] + "_s0" + season + ep_str \
+        new_name = str(count) + " - " + old_name[left_offset:(len(old_name) - right_offset)].replace('_', ' ') + "_s0" + season + ep_str \
                + str(count) + "." + file_ending
 
         print(old_name + " <-> " + new_name)
@@ -119,8 +119,8 @@ def main():
 
             while True and not args_passed:
                 try:
-                    left_offset = int(raw_input("Enter number of characters from left to remove: "))
-                    right_offset = int(raw_input("Enter number of characters from right to remove: "))
+                    left_offset = int(raw_input("characters to remove from left: "))
+                    right_offset = int(raw_input("characters to remove from right: "))
                     break
                 except ValueError:
                     print("please enter a numerical numbers only")
