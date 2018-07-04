@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 from Tkinter import *
 import ttk
+import tkFileDialog as filedialog
 import re_namer
 
 
@@ -28,12 +29,15 @@ class MainApp:
 
         self.top_frame(master)
 
-        self.bootm_fram(master)
+        self.bottom_frame(master)
 
-    def top_frame(self,master):
+    def top_frame(self, master):
+        """Defines top panel frame of """
+
         # top frame
         self.top_fr = ttk.Frame(master, padding=(10, 10))
         self.top_fr.grid(row=0, column=0, sticky=NW)
+
         # directory stuff
         self.cwd_lb = ttk.Label(self.top_fr, text="Current Directory:")
         self.cwd_entry = ttk.Entry(self.top_fr, width=60)
@@ -41,21 +45,25 @@ class MainApp:
         self.cwd_lb.grid(row=0, column=0, sticky=NW, columnspan=2)
         self.cwd_entry.grid(row=1, column=0, columnspan=4, pady=(0, 10))
         self.cwd_button.grid(row=1, column=4, padx=(5, 0), pady=(0, 10))
+
         # file type
         self.file_type_lb = ttk.Label(self.top_fr, text="File Type:")
         self.file_type_entry = ttk.Entry(self.top_fr, width=10)
         self.file_type_lb.grid(row=2, column=0, sticky=NW)
         self.file_type_entry.grid(row=3, column=0, sticky=NW)
+
         # Season
         self.season_lb = ttk.Label(self.top_fr, text="Season:")
         self.season_entry = ttk.Entry(self.top_fr, width=10)
         self.season_lb.grid(row=2, column=1, sticky=NW)
         self.season_entry.grid(row=3, column=1, sticky=NW)
+
         # left
         self.left_lb = ttk.Label(self.top_fr, text="Left:")
         self.left_entry = ttk.Entry(self.top_fr, width=10)
         self.left_lb.grid(row=2, column=2, sticky=NW)
         self.left_entry.grid(row=3, column=2, sticky=NW)
+
         # file type
         self.right_lb = ttk.Label(self.top_fr, text="Right:")
         self.right_entry = ttk.Entry(self.top_fr, width=10)
@@ -63,21 +71,36 @@ class MainApp:
         self.right_entry.grid(row=3, column=3, sticky=NW)
 
     def bottom_frame(self, master):
-        """"""
+        """defines bottom frame"""
+
         # Bottom frame
         self.bottom_fr = ttk.Frame(master, padding=(10, 0))
         self.bottom_fr.grid(row=1, column=0, sticky=NW)
         self.bottom_fr.rowconfigure(1, weight=1)
         #self.bottom_fr.columnconfigure()
+
         # text box stuff
         self.tb_lb = ttk.Label(self.bottom_fr, text="File name changes:")
         self.tb = Text(self.bottom_fr, height=20, width=69, font=('Arial', 10))
         self.tb_lb.grid(row=0, column=0, columnspan=2, sticky=NW)
-        self.tb.grid(row=1, column=0, columnspan=5, sticky=NW)
+        self.tb.grid(row=1, column=0, columnspan=5, sticky=NW, pady=(0, 10))
+
+        # buttons
+        self.commit_bt = ttk.Button(self.bottom_fr, text="Commit", state='disabled', command=self.commit)
+        self.apply_bt = ttk.Button(self.bottom_fr, text="Apply", command=self.apply)
+        self.commit_bt.grid(row=2, column=1, sticky=NE)
+        self.apply_bt.grid(row=2, column=2, sticky=NE)
 
     def select_dir(self):
         """Opens file selection dir"""
+        file_ = filedialog.askopenfilenames()
+        print(file)
+    def commit(self):
+        """Commit and alters"""
 
+    def apply(self):
+        """Shows changes in textbox"""
+        self.commit_bt.configure(state='!disabled')
 
 def main():
     root = Tk()
