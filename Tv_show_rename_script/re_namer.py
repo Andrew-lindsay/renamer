@@ -39,7 +39,13 @@ def change_file_names(file_list, season, left_offset, right_offset, file_ending)
     for count, old_name in enumerate(file_list, 1):
 
         # if count is greater than nine don't place 0 in front
-        ep_str = "e" if count > 9 else "e0"
+        # ep_str = "e" if count > 9 else "e0"
+        if count <= 9:
+            ep_str = "e00"
+        elif count <= 99:
+            ep_str = "e0"
+        else:
+            ep_str = "e"
 
         new_name = str(count) + " - " + old_name[left_offset:(len(old_name) - right_offset)].replace('_', ' ') + "_s0" + season + ep_str \
                + str(count) + "." + file_ending
@@ -54,7 +60,7 @@ def commit_name_change(file_list, new_names, cwd):
     """ Takes old names of files sorted and mapping to new names of files"""
     for x in range(0, len(new_names)):
         print(file_list[x] + " <-> " + new_names[x])
-        os.rename(cwd + "\\" + file_list[x], cwd + "\\" + new_names[x])
+        os.rename(os.path.join(cwd, file_list[x]), os.path.join(cwd, new_names[x]))
 
 
 def yes_or_no(message='Enter y/n: '):
