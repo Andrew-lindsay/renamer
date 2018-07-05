@@ -2,7 +2,17 @@
 from Tkinter import *
 import ttk
 import tkFileDialog as filedialog
-import re_namer
+import tkMessageBox
+import tkColorChooser
+import re_namer as rn
+import os
+
+# TODO: scroll bars on textbox
+# TODO: scale textbox
+# TODO: background color selector
+# TODO: file menu bar
+# TODO: progress bar
+# TODO: directly edit the text in new names array in other tab
 
 
 class ProgressWindow:
@@ -15,11 +25,32 @@ class MainApp:
 
     def __init__(self, master):
         """Create widgets to be placed on root window"""
+        #vars
+        self.bg = '#e0dbdd'
+        self.dir_str = StringVar()
+        self.fl_list = []
+        self.fl_new_names = []
+        # directory that commit command uses so that value cannot be changed between apply and commit
+        self.dire_commit = ""
+
         # master setup
         master.title("Re-namer")
-        master.geometry("510x600+400+100")
-        self.bg = '#e0dbdd'
+        master.geometry("510x500+400+100")
         master.configure(background=self.bg)
+        master.option_add('*tearOff', False)
+
+        # menu bar
+        menubar = Menu(master, background=self.bg)
+        menubar.config(bg=self.bg)
+        master.config(menu=menubar, bg=self.bg)
+        file = Menu(menubar, background=self.bg)
+        options = Menu(menubar, background=self.bg)
+        menubar.add_cascade(menu=file, label="File")
+        menubar.add_cascade(menu=options, label="Options")
+        file.add_command(label="Save")
+        file.add_command(label="Exit")
+        options.add_command(label="Select Background", command=lambda: self.color_picker(master))
+        options.add_command(label="Set Count")
 
         # style TODO: add style
         self.style = ttk.Style()
@@ -40,7 +71,7 @@ class MainApp:
 
         # directory stuff
         self.cwd_lb = ttk.Label(self.top_fr, text="Current Directory:")
-        self.cwd_entry = ttk.Entry(self.top_fr, width=60)
+        self.cwd_entry = ttk.Entry(self.top_fr, width=60, textvariable=self.dir_str)
         self.cwd_button = ttk.Button(self.top_fr, text='Select', command=self.select_dir)
         self.cwd_lb.grid(row=0, column=0, sticky=NW, columnspan=2)
         self.cwd_entry.grid(row=1, column=0, columnspan=4, pady=(0, 10))
@@ -93,14 +124,76 @@ class MainApp:
 
     def select_dir(self):
         """Opens file selection dir"""
-        file_ = filedialog.askopenfilenames()
-        print(file)
+        dir_name = filedialog.askdirectory()
+        if dir_name is not "":
+            print("name: " + dir_name)
+            self.tb.delete("1.0", 'end')
+            self.dir_str.set(dir_name)
+
     def commit(self):
         """Commit and alters"""
+        rn.commit_name_change(self.fl_list, self.fl_new_names, self.dire_commit)
+        self.commit_bt.configure(state='disabled')
 
     def apply(self):
         """Shows changes in textbox"""
+        # TODO: save last operation so it can be reverted (maybe save all of them)
+
+        # check directory is not empty and is a vaild dirctory
+        if self.dir_str.get() is "" or not os.path.isdir(self.dir_str.get()):
+            tkMessageBox.showwarning(title="Invalid Directory", message="Please enter a valid Directory")
+            return
+
+        # check entry boxes for valid entry data
+        try:
+            left_off = int(self.left_entry.get())
+            right_off = int(self.right_entry.get())
+            season = str(int(self.season_entry.get()))
+        except ValueError:
+            tkMessageBox.showwarning(title="Invalid data entered",
+                                     message="One or more of the entry fields has invalid data\nEnsure that left, "
+                                             "right and season are integers.")
+            return
+
+        self.fl_list = self.file_list_sort(dire=self.dir_str.get(), file_type=self.file_type_entry.get())
+        # print to terminal
+        for fl in self.fl_list:
+            print(fl)
+
+        self.fl_new_names = rn.change_file_names(left_offset=left_off,
+                                                 right_offset=right_off,
+                                                 file_ending=self.file_type_entry.get(),
+                                                 season=season,
+                                                 file_list=self.fl_list)
+
+        # alter text box
+        self.tb.delete("1.0", 'end')
+        for x in range(0, len(self.fl_list)):
+            self.tb.insert(str(x+1)+".0", self.fl_list[x] + " --> " + self.fl_new_names[x] + "\n")
+
+        # allow user to now commit changes to file names
         self.commit_bt.configure(state='!disabled')
+        self.dire_commit = self.dir_str.get()
+
+    def color_picker(self,master):
+        colour_selected = tkColorChooser.askcolor()
+        print(colour_selected)
+        self.style.configure('TFrame', background=colour_selected[1])
+        self.style.configure('TButton', background=colour_selected[1])
+        self.style.configure('TLabel', background=colour_selected[1])
+        master.configure(background=colour_selected[1])
+
+
+    @staticmethod
+    def file_list_sort(dire, file_type):
+        """takes directory and file ending and returns list of files in directory that end with that file ending"""
+        filelist = []
+        for _file in os.listdir(dire):
+            if _file.endswith(file_type):
+                filelist.append(_file)
+        filelist.sort()
+        return filelist
+
 
 def main():
     root = Tk()
