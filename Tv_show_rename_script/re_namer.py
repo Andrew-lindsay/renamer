@@ -62,9 +62,12 @@ def change_file_names(file_list, season, left_offset, right_offset, file_ending)
     return names
 
 
-def commit_name_change(file_list, new_names, cwd):
+def commit_name_change(file_list, new_names, cwd, wid=None):
     """ Takes old names of files sorted and mapping to new names of files"""
     for x in range(0, len(new_names)):
+        # for compatibility with gui
+        if wid is not None:
+            wid.step()
         print(file_list[x] + " <-> " + new_names[x])
         os.rename(os.path.join(cwd, file_list[x]), os.path.join(cwd, new_names[x]))
 

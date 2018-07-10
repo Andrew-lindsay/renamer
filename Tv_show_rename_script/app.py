@@ -9,33 +9,44 @@ import os
 
 # TODO: scroll bars on textbox
 # TODO: scale textbox
-# TODO: background color selector
 # TODO: file menu bar
 # TODO: progress bar
 # TODO: directly edit the text in new names array in other tab
+# TODO: make background colour percistant
+# TODO: add icon to window
+# TODO: add custom count setting logic
+# TODO: add option to save the conversion between file names
 
 
 class ProgressWindow:
 
-    def __init__(self, master):
+    def __init__(self, master, num_files):
         self.tlw = Toplevel(master)
+        self.tlw.resizable(False, False)
+        ttk.Label(self.tlw, text="Committing..", background=MainApp.bg).pack()
+        self.prog_bar = ttk.Progressbar(self.tlw, mode='determinate', maximum=num_files, length=200)
+        self.prog_bar.pack()
+        self.tlw.lift(master)
 
 
 class MainApp:
+    # class variables
+    bg = '#e0dbdd'
 
     def __init__(self, master):
         """Create widgets to be placed on root window"""
-        #vars
+        # vars
         self.bg = '#e0dbdd'
         self.dir_str = StringVar()
         self.fl_list = []
         self.fl_new_names = []
         # directory that commit command uses so that value cannot be changed between apply and commit
         self.dire_commit = ""
+        self.master_ref = master
 
         # master setup
         master.title("Re-namer")
-        master.geometry("510x500+400+100")
+        master.geometry("520x510+400+100")
         master.configure(background=self.bg)
         master.option_add('*tearOff', False)
 
@@ -52,7 +63,6 @@ class MainApp:
         options.add_command(label="Select Background", command=lambda: self.color_picker(master))
         options.add_command(label="Set Count")
 
-        # style TODO: add style
         self.style = ttk.Style()
         self.style.configure('TFrame', background=self.bg)
         self.style.configure('TButton', background=self.bg)
@@ -63,7 +73,7 @@ class MainApp:
         self.bottom_frame(master)
 
     def top_frame(self, master):
-        """Defines top panel frame of """
+        """Defines top panel frame of app"""
 
         # top frame
         self.top_fr = ttk.Frame(master, padding=(10, 10))
@@ -110,17 +120,28 @@ class MainApp:
         self.bottom_fr.rowconfigure(1, weight=1)
         #self.bottom_fr.columnconfigure()
 
+        # scroll bars
+        self.x_txt_scr = ttk.Scrollbar(self.bottom_fr, orient=HORIZONTAL)
+        self.y_txt_scr = ttk.Scrollbar(self.bottom_fr, orient=VERTICAL)
+
         # text box stuff
         self.tb_lb = ttk.Label(self.bottom_fr, text="File name changes:")
-        self.tb = Text(self.bottom_fr, height=20, width=69, font=('Arial', 10))
+        self.tb = Text(self.bottom_fr, height=20, width=69, font=('Arial', 10), wrap=NONE)
         self.tb_lb.grid(row=0, column=0, columnspan=2, sticky=NW)
-        self.tb.grid(row=1, column=0, columnspan=5, sticky=NW, pady=(0, 10))
+        self.tb.grid(row=1, column=0, columnspan=5, sticky=NW)
+
+        # binding scroll bars
+        self.x_txt_scr.configure(command=self.tb.xview)
+        self.y_txt_scr.configure(command=self.tb.yview)
+        self.x_txt_scr.grid(row=2, column=0, columnspan=6, sticky=EW, pady=(0, 10))
+        self.y_txt_scr.grid(row=1, column=5, sticky=NS)
+        self.tb.configure(xscrollcommand=self.x_txt_scr.set, yscrollcommand=self.y_txt_scr.set)
 
         # buttons
         self.commit_bt = ttk.Button(self.bottom_fr, text="Commit", state='disabled', command=self.commit)
         self.apply_bt = ttk.Button(self.bottom_fr, text="Apply", command=self.apply)
-        self.commit_bt.grid(row=2, column=1, sticky=NE)
-        self.apply_bt.grid(row=2, column=2, sticky=NE)
+        self.commit_bt.grid(row=3, column=1, sticky=SE)
+        self.apply_bt.grid(row=3, column=2, sticky=NE)
 
     def select_dir(self):
         """Opens file selection dir"""
@@ -131,12 +152,13 @@ class MainApp:
             self.dir_str.set(dir_name)
 
     def commit(self):
-        """Commit and alters"""
-        rn.commit_name_change(self.fl_list, self.fl_new_names, self.dire_commit)
+        """Commit and alters files names"""
+        prog_win = ProgressWindow(self.master_ref, len(self.fl_list))
+        rn.commit_name_change(self.fl_list, self.fl_new_names, self.dire_commit, wid=prog_win.prog_bar)
         self.commit_bt.configure(state='disabled')
 
     def apply(self):
-        """Shows changes in textbox"""
+        """Shows changes to files in textbox"""
         # TODO: save last operation so it can be reverted (maybe save all of them)
 
         # check directory is not empty and is a vaild dirctory
@@ -153,6 +175,7 @@ class MainApp:
             tkMessageBox.showwarning(title="Invalid data entered",
                                      message="One or more of the entry fields has invalid data\nEnsure that left, "
                                              "right and season are integers.")
+            # exit function if invalid parameter
             return
 
         self.fl_list = self.file_list_sort(dire=self.dir_str.get(), file_type=self.file_type_entry.get())
@@ -175,7 +198,7 @@ class MainApp:
         self.commit_bt.configure(state='!disabled')
         self.dire_commit = self.dir_str.get()
 
-    def color_picker(self,master):
+    def color_picker(self, master):
         colour_selected = tkColorChooser.askcolor()
         print(colour_selected)
         self.style.configure('TFrame', background=colour_selected[1])
@@ -194,6 +217,8 @@ class MainApp:
         filelist.sort()
         return filelist
 
+    def load_preferences(self):
+        pass
 
 def main():
     root = Tk()
