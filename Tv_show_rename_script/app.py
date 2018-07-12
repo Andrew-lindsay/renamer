@@ -6,27 +6,72 @@ import tkMessageBox
 import tkColorChooser
 import re_namer as rn
 import os
+import thread
+import sys
 
-# TODO: scroll bars on textbox
 # TODO: scale textbox
-# TODO: file menu bar
-# TODO: progress bar
 # TODO: directly edit the text in new names array in other tab
 # TODO: make background colour percistant
 # TODO: add icon to window
-# TODO: add custom count setting logic
 # TODO: add option to save the conversion between file names
+# TODO: fix geometry of popup windows
+
+
+class EntryBoxWindow:
+
+    def __init__(self, master, label="Value:"):
+        self.val = 0
+
+        self.tlw = Toplevel(master, padx=5, pady=5, bg=MainApp.bg, takefocus=True)
+        self.tlw.geometry("+550+250")
+        self.tlw.resizable(False, False)
+        self.val_entry = ttk.Entry(self.tlw, width=6)
+        self.butt = ttk.Button(self.tlw, text="Enter", command=self.ret_val)
+        ttk.Label(self.tlw, text=label).grid(row=0, column=0, padx=5)
+        self.val_entry.grid(row=0, column=1)
+        self.butt.grid(row=0, column=2, padx=5)
+
+        self.val_entry.bind('<Return>', lambda x: self.ret_val())
+
+    def ret_val(self):
+        try:
+            self.val = int(self.val_entry.get())
+            self.tlw.destroy()
+        except ValueError:
+            tkMessageBox.showwarning(title='Value entry error', message='Please entry only interger values')
 
 
 class ProgressWindow:
 
-    def __init__(self, master, num_files):
-        self.tlw = Toplevel(master)
+    def __init__(self, master, num_files=0):
+        self.master = master
+
+        self.tlw = Toplevel(master, padx=5, pady=5, bg=MainApp.bg)
         self.tlw.resizable(False, False)
-        ttk.Label(self.tlw, text="Committing..", background=MainApp.bg).pack()
-        self.prog_bar = ttk.Progressbar(self.tlw, mode='determinate', maximum=num_files, length=200)
+        self.tlw.geometry("+550+250")
+
+        self.val = DoubleVar()
+        self.val.set(0.0)
+
+        ttk.Label(self.tlw, text="Committing..", background=MainApp.bg).pack(anchor=W)
+        self.prog_bar = ttk.Progressbar(self.tlw, mode='determinate', maximum=float(num_files), length=200, variable=self.val)
         self.prog_bar.pack()
-        self.tlw.lift(master)
+        self.tlw.withdraw()
+
+    def set_num_files(self, num_files):
+        self.prog_bar['maximum'] = float(num_files)
+        self.prog_bar['value'] = 0.0
+
+    def destroy(self):
+        self.tlw.destroy()
+
+    def withdraw(self):
+        self.tlw.withdraw()
+
+    def show(self):
+        self.tlw.deiconify()
+        self.tlw.lift(self.master)
+        self.tlw.configure(takefocus=True)
 
 
 class MainApp:
@@ -40,6 +85,7 @@ class MainApp:
         self.dir_str = StringVar()
         self.fl_list = []
         self.fl_new_names = []
+        self.count_val = 1
         # directory that commit command uses so that value cannot be changed between apply and commit
         self.dire_commit = ""
         self.master_ref = master
@@ -59,14 +105,16 @@ class MainApp:
         menubar.add_cascade(menu=file, label="File")
         menubar.add_cascade(menu=options, label="Options")
         file.add_command(label="Save")
-        file.add_command(label="Exit")
+        file.add_command(label="Exit", command=lambda: sys.exit(0))
         options.add_command(label="Select Background", command=lambda: self.color_picker(master))
-        options.add_command(label="Set Count")
+        options.add_command(label="Set Count", command=self.count_function)
 
         self.style = ttk.Style()
         self.style.configure('TFrame', background=self.bg)
         self.style.configure('TButton', background=self.bg)
         self.style.configure('TLabel', background=self.bg)
+
+        self.prog_win = ProgressWindow(master)
 
         self.top_frame(master)
 
@@ -92,24 +140,28 @@ class MainApp:
         self.file_type_entry = ttk.Entry(self.top_fr, width=10)
         self.file_type_lb.grid(row=2, column=0, sticky=NW)
         self.file_type_entry.grid(row=3, column=0, sticky=NW)
+        self.file_type_entry.bind('<Return>', lambda x: self.apply())
 
         # Season
         self.season_lb = ttk.Label(self.top_fr, text="Season:")
         self.season_entry = ttk.Entry(self.top_fr, width=10)
         self.season_lb.grid(row=2, column=1, sticky=NW)
         self.season_entry.grid(row=3, column=1, sticky=NW)
+        self.season_entry.bind('<Return>', lambda x: self.apply())
 
         # left
         self.left_lb = ttk.Label(self.top_fr, text="Left:")
         self.left_entry = ttk.Entry(self.top_fr, width=10)
         self.left_lb.grid(row=2, column=2, sticky=NW)
         self.left_entry.grid(row=3, column=2, sticky=NW)
+        self.left_entry.bind('<Return>', lambda x: self.apply())
 
         # file type
         self.right_lb = ttk.Label(self.top_fr, text="Right:")
         self.right_entry = ttk.Entry(self.top_fr, width=10)
         self.right_lb.grid(row=2, column=3, sticky=NW)
         self.right_entry.grid(row=3, column=3, sticky=NW)
+        self.right_entry.bind('<Return>', lambda x: self.apply())
 
     def bottom_frame(self, master):
         """defines bottom frame"""
@@ -153,9 +205,22 @@ class MainApp:
 
     def commit(self):
         """Commit and alters files names"""
-        prog_win = ProgressWindow(self.master_ref, len(self.fl_list))
-        rn.commit_name_change(self.fl_list, self.fl_new_names, self.dire_commit, wid=prog_win.prog_bar)
+        # Create progress window
+        self.prog_win.set_num_files(len(self.fl_list)+1)
+        self.prog_win.show()
+        # start thread that handles commit so gui thread can update
+        thread.start_new_thread(rn.commit_name_change, (self.fl_list, self.fl_new_names, self.dire_commit, self.prog_win.prog_bar))
+        print("Completed commit")
         self.commit_bt.configure(state='disabled')
+        self.master_ref.after(100, self.check_prog)
+
+    def check_prog(self):
+        # keep checking the progress bar if it has finished then hid the window
+        if self.prog_win.val.get() == len(self.fl_list):
+            self.prog_win.withdraw()
+            self.count_val = 1
+        else:
+            self.master_ref.after(100, self.check_prog)
 
     def apply(self):
         """Shows changes to files in textbox"""
@@ -187,7 +252,8 @@ class MainApp:
                                                  right_offset=right_off,
                                                  file_ending=self.file_type_entry.get(),
                                                  season=season,
-                                                 file_list=self.fl_list)
+                                                 file_list=self.fl_list,
+                                                 counter=self.count_val)
 
         # alter text box
         self.tb.delete("1.0", 'end')
@@ -205,7 +271,8 @@ class MainApp:
         self.style.configure('TButton', background=colour_selected[1])
         self.style.configure('TLabel', background=colour_selected[1])
         master.configure(background=colour_selected[1])
-
+        self.bg = colour_selected[1]
+        MainApp.bg = colour_selected[1]
 
     @staticmethod
     def file_list_sort(dire, file_type):
@@ -219,6 +286,14 @@ class MainApp:
 
     def load_preferences(self):
         pass
+
+    # menu functions
+    def count_function(self):
+        ent = EntryBoxWindow(self.master_ref, label="Count value:")
+        self.master_ref.wait_window(ent.tlw)
+        self.count_val = ent.val
+        print('values returned', self.count_val)
+
 
 def main():
     root = Tk()

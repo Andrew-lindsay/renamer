@@ -1,6 +1,7 @@
 import os
 import sys
 import argparse
+import time
 
 #  surprise Totoro
 #    _____
@@ -33,13 +34,13 @@ Description:
     return str(args_parsed.season), args_parsed.ending, args_parsed.left, args_parsed.right
 
 
-def change_file_names(file_list, season, left_offset, right_offset, file_ending):
+def change_file_names(file_list, season, left_offset, right_offset, file_ending, counter=1):
     """alters file names and prints old and new to screen"""
     names = []
     num_of_zero = len(str(len(file_list)))
     modifer = 0 if num_of_zero is not 1 else 1
 
-    for count, old_name in enumerate(file_list, 1):
+    for count, old_name in enumerate(file_list, counter):
 
         # if count is greater than nine don't place 0 in front
         # ep_str = "e" if count > 9 else "e0"
@@ -67,6 +68,8 @@ def commit_name_change(file_list, new_names, cwd, wid=None):
     for x in range(0, len(new_names)):
         # for compatibility with gui
         if wid is not None:
+            print("Pressed")
+            time.sleep(0.1)
             wid.step()
         print(file_list[x] + " <-> " + new_names[x])
         os.rename(os.path.join(cwd, file_list[x]), os.path.join(cwd, new_names[x]))
