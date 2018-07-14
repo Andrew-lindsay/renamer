@@ -8,6 +8,7 @@ import re_namer as rn
 import os
 import thread
 import sys
+import csv
 
 # TODO: scale textbox
 # TODO: directly edit the text in new names array in other tab
@@ -100,14 +101,16 @@ class MainApp:
         menubar = Menu(master, background=self.bg)
         menubar.config(bg=self.bg)
         master.config(menu=menubar, bg=self.bg)
-        file = Menu(menubar, background=self.bg)
+        self.file_m = Menu(menubar, background=self.bg)
         options = Menu(menubar, background=self.bg)
-        menubar.add_cascade(menu=file, label="File")
+        menubar.add_cascade(menu=self.file_m, label="File")
         menubar.add_cascade(menu=options, label="Options")
-        file.add_command(label="Save")
-        file.add_command(label="Exit", command=lambda: sys.exit(0))
+        self.file_m.add_command(label="Save", state='disabled', command=self.save_file_conver)
+        self.file_m.add_command(label="Revert", state='disabled')
+        self.file_m.add_command(label="Exit", command=lambda: sys.exit(0))
         options.add_command(label="Select Background", command=lambda: self.color_picker(master))
         options.add_command(label="Set Count", command=self.count_function)
+
 
         self.style = ttk.Style()
         self.style.configure('TFrame', background=self.bg)
@@ -202,6 +205,9 @@ class MainApp:
             print("name: " + dir_name)
             self.tb.delete("1.0", 'end')
             self.dir_str.set(dir_name)
+            if os.path.isfile(os.path.join(dir_name, 'backup.csv')):
+                self.file_m.entryconfigure('Revert', state='normal')
+
 
     def commit(self):
         """Commit and alters files names"""
@@ -219,6 +225,7 @@ class MainApp:
         if self.prog_win.val.get() == len(self.fl_list):
             self.prog_win.withdraw()
             self.count_val = 1
+            self.prog_win.val.set(0.0)
         else:
             self.master_ref.after(100, self.check_prog)
 
@@ -262,6 +269,7 @@ class MainApp:
 
         # allow user to now commit changes to file names
         self.commit_bt.configure(state='!disabled')
+        self.file_m.entryconfigure('Save', state='normal')
         self.dire_commit = self.dir_str.get()
 
     def color_picker(self, master):
@@ -277,17 +285,24 @@ class MainApp:
     @staticmethod
     def file_list_sort(dire, file_type):
         """takes directory and file ending and returns list of files in directory that end with that file ending"""
-        filelist = []
+        file_list = []
         for _file in os.listdir(dire):
             if _file.endswith(file_type):
-                filelist.append(_file)
-        filelist.sort()
-        return filelist
+                file_list.append(_file)
+        file_list.sort()
+        return file_list
 
     def load_preferences(self):
         pass
 
+    def save_file_conver(self):
+        with open(os.path.join(self.dir_str.get(), 'backup.csv'), 'w') as file_s:
+            csv_wr = csv.writer(file_s, delimiter=',')
+            for name_pair in zip(self.fl_list, self.fl_new_names):
+                csv_wr.writerow(name_pair)
+        self.file_m.entryconfigure('Revert', state='normal')
     # menu functions
+
     def count_function(self):
         ent = EntryBoxWindow(self.master_ref, label="Count value:")
         self.master_ref.wait_window(ent.tlw)
