@@ -13,9 +13,9 @@ import csv
 # TODO: scale textbox
 # TODO: directly edit the text in new names array in other tab
 # TODO: make background colour percistant
-# TODO: add icon to window
 # TODO: add option to save the conversion between file names
 # TODO: fix geometry of popup windows
+# TODO: revert button needs check if new names in file match names of files in folder at the current time
 
 
 class EntryBoxWindow:
@@ -26,6 +26,7 @@ class EntryBoxWindow:
         self.tlw = Toplevel(master, padx=5, pady=5, bg=MainApp.bg, takefocus=True)
         self.tlw.geometry("+550+250")
         self.tlw.resizable(False, False)
+        self.tlw.iconbitmap(MainApp.icon)
         self.val_entry = ttk.Entry(self.tlw, width=6)
         self.butt = ttk.Button(self.tlw, text="Enter", command=self.ret_val)
         ttk.Label(self.tlw, text=label).grid(row=0, column=0, padx=5)
@@ -50,6 +51,7 @@ class ProgressWindow:
         self.tlw = Toplevel(master, padx=5, pady=5, bg=MainApp.bg)
         self.tlw.resizable(False, False)
         self.tlw.geometry("+550+250")
+        self.tlw.iconbitmap(MainApp.icon)
 
         self.val = DoubleVar()
         self.val.set(0.0)
@@ -78,6 +80,7 @@ class ProgressWindow:
 class MainApp:
     # class variables
     bg = '#e0dbdd'
+    icon = os.path.join(os.getcwd(), 'renamer.ico')
 
     def __init__(self, master):
         """Create widgets to be placed on root window"""
@@ -93,9 +96,10 @@ class MainApp:
 
         # master setup
         master.title("Re-namer")
-        master.geometry("520x510+400+100")
+        master.geometry("520x535+400+100")
         master.configure(background=self.bg)
         master.option_add('*tearOff', False)
+        master.iconbitmap(MainApp.icon)
 
         # menu bar
         menubar = Menu(master, background=self.bg)
@@ -106,7 +110,7 @@ class MainApp:
         menubar.add_cascade(menu=self.file_m, label="File")
         menubar.add_cascade(menu=options, label="Options")
         self.file_m.add_command(label="Save", state='disabled', command=self.save_file_conver)
-        self.file_m.add_command(label="Revert", state='disabled')
+        self.file_m.add_command(label="Revert", state='disabled', command=self.revert_conver)
         self.file_m.add_command(label="Exit", command=lambda: sys.exit(0))
         options.add_command(label="Select Background", command=lambda: self.color_picker(master))
         options.add_command(label="Set Count", command=self.count_function)
@@ -137,6 +141,7 @@ class MainApp:
         self.cwd_lb.grid(row=0, column=0, sticky=NW, columnspan=2)
         self.cwd_entry.grid(row=1, column=0, columnspan=4, pady=(0, 10))
         self.cwd_button.grid(row=1, column=4, padx=(5, 0), pady=(0, 10))
+        self.cwd_entry.bind('<Return>', lambda x: self.is_backup())
 
         # file type
         self.file_type_lb = ttk.Label(self.top_fr, text="File Type:")
@@ -208,7 +213,6 @@ class MainApp:
             if os.path.isfile(os.path.join(dir_name, 'backup.csv')):
                 self.file_m.entryconfigure('Revert', state='normal')
 
-
     def commit(self):
         """Commit and alters files names"""
         # Create progress window
@@ -226,12 +230,14 @@ class MainApp:
             self.prog_win.withdraw()
             self.count_val = 1
             self.prog_win.val.set(0.0)
+            # once commited can then write commit to file
+            self.file_m.entryconfigure('Save', state='normal')
+            # commited names for if save is used
         else:
             self.master_ref.after(100, self.check_prog)
 
     def apply(self):
         """Shows changes to files in textbox"""
-        # TODO: save last operation so it can be reverted (maybe save all of them)
 
         # check directory is not empty and is a vaild dirctory
         if self.dir_str.get() is "" or not os.path.isdir(self.dir_str.get()):
@@ -255,6 +261,7 @@ class MainApp:
         for fl in self.fl_list:
             print(fl)
 
+        # call to external module
         self.fl_new_names = rn.change_file_names(left_offset=left_off,
                                                  right_offset=right_off,
                                                  file_ending=self.file_type_entry.get(),
@@ -269,7 +276,6 @@ class MainApp:
 
         # allow user to now commit changes to file names
         self.commit_bt.configure(state='!disabled')
-        self.file_m.entryconfigure('Save', state='normal')
         self.dire_commit = self.dir_str.get()
 
     def color_picker(self, master):
@@ -295,13 +301,54 @@ class MainApp:
     def load_preferences(self):
         pass
 
+    def is_backup(self):
+        if os.path.isfile(os.path.join(self.dir_str.get(), 'backup.csv')):
+            self.file_m.entryconfigure('Revert', state='normal')
+
     def save_file_conver(self):
         with open(os.path.join(self.dir_str.get(), 'backup.csv'), 'w') as file_s:
             csv_wr = csv.writer(file_s, delimiter=',')
             for name_pair in zip(self.fl_list, self.fl_new_names):
                 csv_wr.writerow(name_pair)
         self.file_m.entryconfigure('Revert', state='normal')
-    # menu functions
+
+    def revert_conver(self):
+        """using backup file undo a file name conversion"""
+
+        # check that dir string have not been changed manually if now not valid backup file disable the revert button
+        if self.dir_str.get() is "" or not os.path.isdir(self.dir_str.get()) \
+                or not os.path.isfile(os.path.join(self.dir_str.get(), 'backup.csv')):
+            tkMessageBox.showwarning(title="Invalid Directory", message="Please enter a valid Directory")
+            self.file_m.entryconfigure('Revert', state='disabled')
+            return
+
+        old_names = []
+        new_names = []
+        # read from csv file and populate lists
+        with open(os.path.join(self.dir_str.get(), 'backup.csv'), 'r') as file_s:
+            csv_re = csv.reader(file_s, delimiter=",")
+            # unzip csv values
+            old_names, new_names = zip(*csv_re)
+            old_names = list(old_names)
+            new_names = list(new_names)
+
+        # check if new names still match the names of the files and ask if they want to force
+        current_file_names = [s.encode('ascii') for s in MainApp.file_list_sort(self.dir_str.get(), old_names[0].split('.')[-1])]
+        if new_names != current_file_names:
+            if tkMessageBox.askyesno(title='File name mismatch',
+                                     message='The file names do not match those that where present when conversion was '
+                                             'made, do you want to force conversion anyway?'):
+                rn.commit_name_change(file_list=current_file_names, new_names=old_names, cwd=self.dir_str.get())
+                self.tb.delete("1.0", 'end')
+                for x in range(0, len(old_names)):
+                    self.tb.insert(str(x + 1) + ".0", current_file_names[x] + " --> " + old_names[x] + "\n")
+        else:
+            print('Match')
+            rn.commit_name_change(file_list=new_names, new_names=old_names, cwd=self.dir_str.get())
+            # write to textbox
+            self.tb.delete("1.0", 'end')
+            for x in range(0, len(old_names)):
+                self.tb.insert(str(x + 1) + ".0", new_names[x] + " --> " + old_names[x] + "\n")
 
     def count_function(self):
         ent = EntryBoxWindow(self.master_ref, label="Count value:")
