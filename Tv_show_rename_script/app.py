@@ -9,13 +9,11 @@ import os
 import thread
 import sys
 import csv
+import yaml
 
 # TODO: scale textbox
-# TODO: directly edit the text in new names array in other tab
 # TODO: make background colour percistant
-# TODO: add option to save the conversion between file names
 # TODO: fix geometry of popup windows
-# TODO: revert button needs check if new names in file match names of files in folder at the current time
 
 
 class EntryBoxWindow:
@@ -87,6 +85,7 @@ class MainApp:
         # vars
         self.bg = '#e0dbdd'
         self.dir_str = StringVar()
+        self.auto_save = IntVar()
         self.fl_list = []
         self.fl_new_names = []
         self.count_val = 1
@@ -94,8 +93,16 @@ class MainApp:
         self.dire_commit = ""
         self.master_ref = master
 
-        # master setup
+        # load preferences
+        self.settings = self.load_preferences()
+
+        # set settings
+        self.auto_save.set(self.settings['auto_save'])
+        self.bg = self.settings['colour']
+        MainApp.bg = self.bg
+
         master.title("Re-namer")
+        # master setup
         master.geometry("520x535+400+100")
         master.configure(background=self.bg)
         master.option_add('*tearOff', False)
@@ -103,18 +110,19 @@ class MainApp:
 
         # menu bar
         menubar = Menu(master, background=self.bg)
-        menubar.config(bg=self.bg)
+        menubar.configure(bg=self.bg)
         master.config(menu=menubar, bg=self.bg)
         self.file_m = Menu(menubar, background=self.bg)
-        options = Menu(menubar, background=self.bg)
+        self.options = Menu(menubar, background=self.bg)
         menubar.add_cascade(menu=self.file_m, label="File")
-        menubar.add_cascade(menu=options, label="Options")
+        menubar.add_cascade(menu=self.options, label="Options")
         self.file_m.add_command(label="Save", state='disabled', command=self.save_file_conver)
         self.file_m.add_command(label="Revert", state='disabled', command=self.revert_conver)
         self.file_m.add_command(label="Exit", command=lambda: sys.exit(0))
-        options.add_command(label="Select Background", command=lambda: self.color_picker(master))
-        options.add_command(label="Set Count", command=self.count_function)
-
+        self.options.add_command(label="Select Background", command=lambda: self.color_picker(master))
+        self.options.add_command(label="Set Count", command=self.count_function)
+        self.options.add_checkbutton(label='Auto Save', variable=self.auto_save)
+        self.options.add_command(label="Save Settings", command=self.write_preferences)
 
         self.style = ttk.Style()
         self.style.configure('TFrame', background=self.bg)
@@ -129,7 +137,6 @@ class MainApp:
 
     def top_frame(self, master):
         """Defines top panel frame of app"""
-
         # top frame
         self.top_fr = ttk.Frame(master, padding=(10, 10))
         self.top_fr.grid(row=0, column=0, sticky=NW)
@@ -173,12 +180,10 @@ class MainApp:
 
     def bottom_frame(self, master):
         """defines bottom frame"""
-
         # Bottom frame
         self.bottom_fr = ttk.Frame(master, padding=(10, 0))
         self.bottom_fr.grid(row=1, column=0, sticky=NW)
         self.bottom_fr.rowconfigure(1, weight=1)
-        #self.bottom_fr.columnconfigure()
 
         # scroll bars
         self.x_txt_scr = ttk.Scrollbar(self.bottom_fr, orient=HORIZONTAL)
@@ -212,6 +217,8 @@ class MainApp:
             self.dir_str.set(dir_name)
             if os.path.isfile(os.path.join(dir_name, 'backup.csv')):
                 self.file_m.entryconfigure('Revert', state='normal')
+            self.file_m.entryconfigure('Save', state='disabled')
+            self.commit_bt.configure(state='disabled')
 
     def commit(self):
         """Commit and alters files names"""
@@ -230,6 +237,9 @@ class MainApp:
             self.prog_win.withdraw()
             self.count_val = 1
             self.prog_win.val.set(0.0)
+            # auto save check box checked then execute
+            if self.auto_save.get():
+                self.save_file_conver()
             # once commited can then write commit to file
             self.file_m.entryconfigure('Save', state='normal')
             # commited names for if save is used
@@ -238,7 +248,6 @@ class MainApp:
 
     def apply(self):
         """Shows changes to files in textbox"""
-
         # check directory is not empty and is a vaild dirctory
         if self.dir_str.get() is "" or not os.path.isdir(self.dir_str.get()):
             tkMessageBox.showwarning(title="Invalid Directory", message="Please enter a valid Directory")
@@ -287,6 +296,8 @@ class MainApp:
         master.configure(background=colour_selected[1])
         self.bg = colour_selected[1]
         MainApp.bg = colour_selected[1]
+        self.file_m.configure(bg=colour_selected[1])
+        self.options.configure(bg=colour_selected[1])
 
     @staticmethod
     def file_list_sort(dire, file_type):
@@ -299,14 +310,46 @@ class MainApp:
         return file_list
 
     def load_preferences(self):
-        pass
+        """Load setting from yaml file"""
+        if os.path.isfile(os.path.join(os.getcwd(), 'properties.yaml')):
+            with open('properties.yaml', 'r') as prop:
+                obj = yaml.load(prop)
+                return obj
+        else:
+            # create dictionary
+            data = {"colour": '#e0dbdd', "auto_save": 0}
+            # write to file
+            with open('properties.yaml', 'w') as prop_new:
+                yaml.dump(data, prop_new, default_flow_style=False)
+            return data
+
+    def write_preferences(self):
+        """Write preferences back to the property yaml file"""
+        self.settings['auto_save'] = self.auto_save.get()
+        self.settings['colour'] = self.bg
+        with open('properties.yaml', 'w') as prop_new:
+            yaml.dump(self.settings, prop_new, default_flow_style=False)
+        tkMessageBox.showinfo(title='Settings save', message='Your settings have been saved')
 
     def is_backup(self):
+        """When hitting enter while tpying in directory entry box check if backup exists, enable option to revert"""
         if os.path.isfile(os.path.join(self.dir_str.get(), 'backup.csv')):
             self.file_m.entryconfigure('Revert', state='normal')
+        else:
+            self.file_m.entryconfigure('Revert', state='disabled')
+        # check if directory has changed from the one used in during commit
+        if self.dir_str.get() != self.dire_commit:
+            self.file_m.entryconfigure('Save', state='disabled')
+            self.tb.delete('1.0', 'end')
 
     def save_file_conver(self):
-        with open(os.path.join(self.dir_str.get(), 'backup.csv'), 'w') as file_s:
+        """ Create csv file with mapping that was last commited """
+        if os.path.isfile(os.path.join(self.dire_commit, 'backup.csv')):
+            if not tkMessageBox.askyesno(title='Backup file exists', message='A back up file already exists in this '
+                                                                             'directory, Do you want to replace it?'):
+                return
+
+        with open(os.path.join(self.dire_commit, 'backup.csv'), 'w') as file_s:
             csv_wr = csv.writer(file_s, delimiter=',')
             for name_pair in zip(self.fl_list, self.fl_new_names):
                 csv_wr.writerow(name_pair)
