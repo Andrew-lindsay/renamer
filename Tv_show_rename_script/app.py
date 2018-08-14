@@ -182,8 +182,12 @@ class MainApp:
         """defines bottom frame"""
         # Bottom frame
         self.bottom_fr = ttk.Frame(master, padding=(10, 0))
-        self.bottom_fr.grid(row=1, column=0, sticky=NW)
+        master.rowconfigure(1, weight=1)
+        master.columnconfigure(0, weight=1)
+
+        self.bottom_fr.grid(row=1, column=0, sticky="nsew")
         self.bottom_fr.rowconfigure(1, weight=1)
+        self.bottom_fr.columnconfigure(0, weight=1)
 
         # scroll bars
         self.x_txt_scr = ttk.Scrollbar(self.bottom_fr, orient=HORIZONTAL)
@@ -191,9 +195,9 @@ class MainApp:
 
         # text box stuff
         self.tb_lb = ttk.Label(self.bottom_fr, text="File name changes:")
-        self.tb = Text(self.bottom_fr, height=20, width=69, font=('Arial', 10), wrap=NONE)
+        self.tb = Text(self.bottom_fr, height=20, width=69, font=('DejaVu Sans Mono', 9), wrap=NONE)
         self.tb_lb.grid(row=0, column=0, columnspan=2, sticky=NW)
-        self.tb.grid(row=1, column=0, columnspan=5, sticky=NW)
+        self.tb.grid(row=1, column=0, columnspan=5, sticky="nsew")
 
         # binding scroll bars
         self.x_txt_scr.configure(command=self.tb.xview)
@@ -203,10 +207,12 @@ class MainApp:
         self.tb.configure(xscrollcommand=self.x_txt_scr.set, yscrollcommand=self.y_txt_scr.set)
 
         # buttons
+        #self.buttFrame = ttk.Frame(self.bottom_fr, padding=(10, 0))
+        #self.buttFrame.grid(row=3, column=0, sticky="nsew")
         self.commit_bt = ttk.Button(self.bottom_fr, text="Commit", state='disabled', command=self.commit)
         self.apply_bt = ttk.Button(self.bottom_fr, text="Apply", command=self.apply)
-        self.commit_bt.grid(row=3, column=1, sticky=SE)
-        self.apply_bt.grid(row=3, column=2, sticky=NE)
+        self.commit_bt.grid(row=3, column=0, padx=(0, 80), pady=(0, 10))
+        self.apply_bt.grid(row=3, column=0, padx=(80, 0), pady=(0, 10))
 
     def select_dir(self):
         """Opens file selection dir"""
@@ -278,10 +284,17 @@ class MainApp:
                                                  file_list=self.fl_list,
                                                  counter=self.count_val)
 
+        # find max, try block in case list of files is empty
+        try:
+            # create list of file name lengths then find max
+            max_name_len = max([len(name) for name in self.fl_list])
+        except ValueError:
+            max_name_len = 0
+
         # alter text box
         self.tb.delete("1.0", 'end')
         for x in range(0, len(self.fl_list)):
-            self.tb.insert(str(x+1)+".0", self.fl_list[x] + " --> " + self.fl_new_names[x] + "\n")
+            self.tb.insert(str(x+1)+".0", self.fl_list[x] + " " + "-"*(max_name_len - len(self.fl_list[x])) + "--> " + self.fl_new_names[x] + "\n")
 
         # allow user to now commit changes to file names
         self.commit_bt.configure(state='!disabled')
