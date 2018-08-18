@@ -37,19 +37,12 @@ Description:
 def change_file_names(file_list, season, left_offset, right_offset, file_ending, counter=1):
     """alters file names and prints old and new to screen"""
     names = []
-    num_of_zero = len(str(len(file_list)))
+    # number of zeros required
+    num_of_zero = len(str(len(file_list) + counter - 1))
+    # for edge case where we need a zero on the episode string or it will not recognise e.g e01-e09 even if
     modifer = 0 if num_of_zero is not 1 else 1
 
     for count, old_name in enumerate(file_list, counter):
-
-        # if count is greater than nine don't place 0 in front
-        # ep_str = "e" if count > 9 else "e0"
-        # if count <= 9:
-        #     ep_str = "e00"
-        # elif count <= 99:
-        #     ep_str = "e0"
-        # else:
-        #     ep_str = "e"
 
         zero_mod = num_of_zero - len(str(count))
         ep_str = "e" + "0"*(zero_mod + modifer)
