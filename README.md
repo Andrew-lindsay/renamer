@@ -6,4 +6,4 @@ Miscellaneous scripts
 ## Tv show renaming script (Python)
 Python scripts for mass renaming of tv show episodes
 ## Remove unwanted windows apps (powershell)
-Amos' scripted that killed his PC 
+Amos' script that killed his PC 

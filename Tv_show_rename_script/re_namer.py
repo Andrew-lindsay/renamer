@@ -2,6 +2,7 @@
 import os
 import sys
 import argparse
+import time
 
 #  surprise Totoro
 #    _____
@@ -34,16 +35,21 @@ Description:
     return str(args_parsed.season), args_parsed.ending, args_parsed.left, args_parsed.right
 
 
-def change_file_names(file_list, season, left_offset, right_offset, file_ending):
+def change_file_names(file_list, season, left_offset, right_offset, file_ending, counter=1):
     """alters file names and prints old and new to screen"""
     names = []
-    for count, old_name in enumerate(file_list, 1):
+    # number of zeros required
+    num_of_zero = len(str(len(file_list) + counter - 1))
+    # for edge case where we need a zero on the episode string or it will not recognise e.g e01-e09 even if
+    modifer = 0 if num_of_zero is not 1 else 1
 
-        # if count is greater than nine don't place 0 in front
-        ep_str = "e" if count > 9 else "e0"
+    for count, old_name in enumerate(file_list, counter):
 
-        new_name = str(count) + " - " + old_name[left_offset:(len(old_name) - right_offset)].replace('_', ' ') + "_s0" + season + ep_str \
-               + str(count) + "." + file_ending
+        zero_mod = num_of_zero - len(str(count))
+        ep_str = "e" + "0"*(zero_mod + modifer)
+
+        new_name = "0"*zero_mod + str(count) + " - " + old_name[left_offset:(len(old_name) - right_offset)].replace('_', ' ')\
+                   + "_s0" + season + ep_str + str(count) + "." + file_ending
 
         print(old_name + " <-> " + new_name)
         names.append(new_name)
@@ -51,11 +57,16 @@ def change_file_names(file_list, season, left_offset, right_offset, file_ending)
     return names
 
 
-def commit_name_change(file_list, new_names, cwd):
+def commit_name_change(file_list, new_names, cwd, wid=None):
     """ Takes old names of files sorted and mapping to new names of files"""
     for x in range(0, len(new_names)):
+        # for compatibility with gui
+        if wid is not None:
+            print("Pressed")
+            time.sleep(0.1)
+            wid.step()
         print(file_list[x] + " <-> " + new_names[x])
-        os.rename(cwd + "\\" + file_list[x], cwd + "\\" + new_names[x])
+        os.rename(os.path.join(cwd, file_list[x]), os.path.join(cwd, new_names[x]))
 
 
 def yes_or_no(message='Enter y/n: '):
