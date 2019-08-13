@@ -49,7 +49,8 @@ class ProgressWindow:
         self.tlw = Toplevel(master, padx=5, pady=5, bg=MainApp.bg)
         self.tlw.resizable(False, False)
         self.tlw.geometry("+550+250")
-        self.tlw.iconbitmap(MainApp.icon)
+        img = PhotoImage(file=MainApp.icon)
+        self.tlw.tk.call('wm', 'iconphoto', self.tlw._w, img)
 
         self.val = DoubleVar()
         self.val.set(0.0)
@@ -78,7 +79,7 @@ class ProgressWindow:
 class MainApp:
     # class variables
     bg = '#e0dbdd'
-    icon = os.path.join(os.getcwd(), 'renamer.ico')
+    icon = os.path.join(os.getcwd(), 'renamer.png')
 
     def __init__(self, master):
         """Create widgets to be placed on root window"""
@@ -106,7 +107,10 @@ class MainApp:
         master.geometry("520x535+400+100")
         master.configure(background=self.bg)
         master.option_add('*tearOff', False)
-        master.iconbitmap(MainApp.icon)
+        img = PhotoImage(file=MainApp.icon)
+        master.call('wm', 'iconphoto', master._w, img)
+
+        # master.wm_iconbitmap(MainApp.icon)
 
         # menu bar
         menubar = Menu(master, background=self.bg)
