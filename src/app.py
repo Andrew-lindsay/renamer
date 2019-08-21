@@ -11,20 +11,25 @@ import sys
 import csv
 import yaml
 
-# TODO: scale textbox
-# TODO: make background colour percistant
 # TODO: fix geometry of popup windows
+# TODO: fix color issue after color picker used but bo color selected
+# TODO: get directory box to be scalable hoziontaly
+# TODO: fix progress bar so spawned each time it is needed
+# TODO: fix 
 
 
 class EntryBoxWindow:
 
-    def __init__(self, master, label="Value:"):
+    def __init__(self, master, label="Value:"): 
         self.val = 0
 
         self.tlw = Toplevel(master, padx=5, pady=5, bg=MainApp.bg, takefocus=True)
         self.tlw.geometry("+550+250")
         self.tlw.resizable(False, False)
-        self.tlw.iconbitmap(MainApp.icon)
+
+        img = PhotoImage(file=MainApp.icon)
+        self.tlw.tk.call('wm', 'iconphoto', self.tlw._w, img)
+
         self.val_entry = ttk.Entry(self.tlw, width=6)
         self.butt = ttk.Button(self.tlw, text="Enter", command=self.ret_val)
         ttk.Label(self.tlw, text=label).grid(row=0, column=0, padx=5)
@@ -104,20 +109,18 @@ class MainApp:
 
         master.title("Re-namer")
         # master setup
-        master.geometry("520x535+400+100")
+        master.geometry("590x535+400+100")
         master.configure(background=self.bg)
         master.option_add('*tearOff', False)
         img = PhotoImage(file=MainApp.icon)
         master.call('wm', 'iconphoto', master._w, img)
 
-        # master.wm_iconbitmap(MainApp.icon)
-
         # menu bar
-        menubar = Menu(master, background=self.bg)
-        menubar.configure(bg=self.bg)
-        master.config(menu=menubar, bg=self.bg)
-        self.file_m = Menu(menubar, background=self.bg)
-        self.options = Menu(menubar, background=self.bg)
+        menubar = Menu(master)
+        # menubar.configure(bg=self.bg)
+        master.config(menu=menubar)
+        self.file_m = Menu(menubar)
+        self.options = Menu(menubar)
         menubar.add_cascade(menu=self.file_m, label="File")
         menubar.add_cascade(menu=self.options, label="Options")
         self.file_m.add_command(label="Save", state='disabled', command=self.save_file_conver)
