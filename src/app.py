@@ -109,18 +109,18 @@ class MainApp:
 
         master.title("Re-namer")
         # master setup
-        master.geometry("590x535+400+100")
+        master.geometry("610x535+400+100")
         master.configure(background=self.bg)
         master.option_add('*tearOff', False)
         img = PhotoImage(file=MainApp.icon)
         master.call('wm', 'iconphoto', master._w, img)
 
         # menu bar
-        menubar = Menu(master)
+        menubar = Menu(master, font=('DejaVu Sans', 9), bd=0)
         # menubar.configure(bg=self.bg)
         master.config(menu=menubar)
-        self.file_m = Menu(menubar)
-        self.options = Menu(menubar)
+        self.file_m = Menu(menubar, font=('DejaVu Sans', 9))
+        self.options = Menu(menubar, font=('DejaVu Sans', 9))    
         menubar.add_cascade(menu=self.file_m, label="File")
         menubar.add_cascade(menu=self.options, label="Options")
         self.file_m.add_command(label="Save", state='disabled', command=self.save_file_conver)
@@ -132,6 +132,7 @@ class MainApp:
         self.options.add_command(label="Save Settings", command=self.write_preferences)
 
         self.style = ttk.Style()
+        self.style.theme_use('alt')
         self.style.configure('TFrame', background=self.bg)
         self.style.configure('TButton', background=self.bg)
         self.style.configure('TLabel', background=self.bg)
@@ -145,44 +146,49 @@ class MainApp:
     def top_frame(self, master):
         """Defines top panel frame of app"""
         # top frame
+        master.columnconfigure(0, weight=1)
+
         self.top_fr = ttk.Frame(master, padding=(10, 10))
-        self.top_fr.grid(row=0, column=0, sticky=NW)
+        self.top_fr.grid(row=0, column=0, sticky="ew")
+        # self.top_fr.rowconfigure(1, weight=1)
+        self.top_fr.columnconfigure(4, weight=1)
+
 
         # directory stuff
         self.cwd_lb = ttk.Label(self.top_fr, text="Current Directory:")
         self.cwd_entry = ttk.Entry(self.top_fr, width=60, textvariable=self.dir_str)
         self.cwd_button = ttk.Button(self.top_fr, text='Select', command=self.select_dir)
-        self.cwd_lb.grid(row=0, column=0, sticky=NW, columnspan=2)
-        self.cwd_entry.grid(row=1, column=0, columnspan=4, pady=(0, 10))
-        self.cwd_button.grid(row=1, column=4, padx=(5, 0), pady=(0, 10))
+        self.cwd_lb.grid(row=0, column=0, sticky=NW, columnspan=4)
+        self.cwd_entry.grid(row=1, column=0, columnspan=5, pady=(0, 10), sticky="ew")
+        self.cwd_button.grid(row=1, column=6, padx=(5, 0), pady=(0, 10))
         self.cwd_entry.bind('<Return>', lambda x: self.is_backup())
 
         # file type
         self.file_type_lb = ttk.Label(self.top_fr, text="File Type:")
         self.file_type_entry = ttk.Entry(self.top_fr, width=10)
         self.file_type_lb.grid(row=2, column=0, sticky=NW)
-        self.file_type_entry.grid(row=3, column=0, sticky=NW)
+        self.file_type_entry.grid(row=3, column=0, sticky=NW, padx=(0, 10))
         self.file_type_entry.bind('<Return>', lambda x: self.apply())
 
         # Season
         self.season_lb = ttk.Label(self.top_fr, text="Season:")
         self.season_entry = ttk.Entry(self.top_fr, width=10)
         self.season_lb.grid(row=2, column=1, sticky=NW)
-        self.season_entry.grid(row=3, column=1, sticky=NW)
+        self.season_entry.grid(row=3, column=1, sticky=NW, padx=(0, 10))
         self.season_entry.bind('<Return>', lambda x: self.apply())
 
         # left
         self.left_lb = ttk.Label(self.top_fr, text="Left:")
         self.left_entry = ttk.Entry(self.top_fr, width=10)
         self.left_lb.grid(row=2, column=2, sticky=NW)
-        self.left_entry.grid(row=3, column=2, sticky=NW)
+        self.left_entry.grid(row=3, column=2, sticky=NW, padx=(0, 10))
         self.left_entry.bind('<Return>', lambda x: self.apply())
 
         # file type
         self.right_lb = ttk.Label(self.top_fr, text="Right:")
         self.right_entry = ttk.Entry(self.top_fr, width=10)
         self.right_lb.grid(row=2, column=3, sticky=NW)
-        self.right_entry.grid(row=3, column=3, sticky=NW)
+        self.right_entry.grid(row=3, column=3, sticky=NW, padx=(0, 10))
         self.right_entry.bind('<Return>', lambda x: self.apply())
 
     def bottom_frame(self, master):
@@ -218,8 +224,8 @@ class MainApp:
         #self.buttFrame.grid(row=3, column=0, sticky="nsew")
         self.commit_bt = ttk.Button(self.bottom_fr, text="Commit", state='disabled', command=self.commit)
         self.apply_bt = ttk.Button(self.bottom_fr, text="Apply", command=self.apply)
-        self.commit_bt.grid(row=3, column=0, padx=(0, 80), pady=(0, 10))
-        self.apply_bt.grid(row=3, column=0, padx=(80, 0), pady=(0, 10))
+        self.commit_bt.grid(row=3, column=0, padx=(0, 110), pady=(0, 10))
+        self.apply_bt.grid(row=3, column=0, padx=(110, 0), pady=(0, 10))
 
     def select_dir(self):
         """Opens file selection dir"""
