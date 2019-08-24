@@ -4,6 +4,7 @@ import ttk
 import tkFileDialog as filedialog
 import tkMessageBox
 import tkColorChooser
+import tkFont
 import re_namer as rn
 import os
 import thread
@@ -84,12 +85,16 @@ class ProgressWindow:
 class MainApp:
     # class variables
     bg = '#e0dbdd'
-    icon = os.path.join(os.getcwd(), 'renamer.png')
+    icon = os.path.join(os.getcwd(), 'renamer.gif')
 
     def __init__(self, master):
         """Create widgets to be placed on root window"""
         # vars
         self.bg = '#e0dbdd'
+        if os.name != "nt":
+            self.app_font = tkFont.Font(family="DejaVu Sans", size=9)
+        else:
+            self.app_font = tkFont.Font(family='Segoe UI', size=9)  # use default for windwow
         self.dir_str = StringVar()
         self.auto_save = IntVar()
         self.fl_list = []
@@ -116,11 +121,11 @@ class MainApp:
         master.call('wm', 'iconphoto', master._w, img)
 
         # menu bar
-        menubar = Menu(master, font=('DejaVu Sans', 9), bd=0)
+        menubar = Menu(master, font=self.app_font, bd=0)
         # menubar.configure(bg=self.bg)
         master.config(menu=menubar)
-        self.file_m = Menu(menubar, font=('DejaVu Sans', 9))
-        self.options = Menu(menubar, font=('DejaVu Sans', 9))    
+        self.file_m = Menu(menubar, font=self.app_font)
+        self.options = Menu(menubar, font=self.app_font)    
         menubar.add_cascade(menu=self.file_m, label="File")
         menubar.add_cascade(menu=self.options, label="Options")
         self.file_m.add_command(label="Save", state='disabled', command=self.save_file_conver)
@@ -132,10 +137,11 @@ class MainApp:
         self.options.add_command(label="Save Settings", command=self.write_preferences)
 
         self.style = ttk.Style()
-        self.style.theme_use('alt')
-        self.style.configure('TFrame', background=self.bg)
-        self.style.configure('TButton', background=self.bg)
-        self.style.configure('TLabel', background=self.bg)
+        if os.name != "nt":
+            self.style.theme_use('alt')
+        self.style.configure('TFrame', background=self.bg, font=self.app_font)
+        self.style.configure('TButton', font=self.app_font)
+        self.style.configure('TLabel', background=self.bg, font=self.app_font)
 
         self.prog_win = ProgressWindow(master)
 

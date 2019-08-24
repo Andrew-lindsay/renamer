@@ -7,7 +7,7 @@ setup(
     windows=[
         {
         "script": "app.py",
-        "icon_resources": [(0, "renamer.ico")]
+        "icon_resources": [(0, "renamer.png")]
         }
     ],
 )

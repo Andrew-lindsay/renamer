@@ -63,7 +63,7 @@ def commit_name_change(file_list, new_names, cwd, wid=None):
         # for compatibility with gui
         if wid is not None:
             print("Pressed")
-            time.sleep(0.1)
+            time.sleep(1.0 / len(new_names))
             wid.step()
         print(file_list[x] + " <-> " + new_names[x])
         os.rename(os.path.join(cwd, file_list[x]), os.path.join(cwd, new_names[x]))
