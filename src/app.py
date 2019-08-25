@@ -321,15 +321,15 @@ class MainApp:
 
     def color_picker(self, master):
         colour_selected = tkColorChooser.askcolor()
-        print(colour_selected)
-        self.style.configure('TFrame', background=colour_selected[1])
-        self.style.configure('TButton', background=colour_selected[1])
-        self.style.configure('TLabel', background=colour_selected[1])
-        master.configure(background=colour_selected[1])
-        self.bg = colour_selected[1]
-        MainApp.bg = colour_selected[1]
-        self.file_m.configure(bg=colour_selected[1])
-        self.options.configure(bg=colour_selected[1])
+        if colour_selected != (None, None):
+            print("colour:" + str(colour_selected))
+            self.style.configure('TFrame', background=colour_selected[1])
+            self.style.configure('TLabel', background=colour_selected[1])
+            master.configure(background=colour_selected[1])
+            self.bg = colour_selected[1]
+            MainApp.bg = colour_selected[1]
+        else:
+            print("No colour selected: " + str(colour_selected))
 
     @staticmethod
     def file_list_sort(dire, file_type):
