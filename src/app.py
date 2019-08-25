@@ -143,7 +143,8 @@ class MainApp:
         self.style.configure('TButton', font=self.app_font)
         self.style.configure('TLabel', background=self.bg, font=self.app_font)
 
-        self.prog_win = ProgressWindow(master)
+        # self.prog_win = ProgressWindow(master)
+        self.prog_win = None
 
         self.top_frame(master)
 
@@ -236,7 +237,8 @@ class MainApp:
     def select_dir(self):
         """Opens file selection dir"""
         dir_name = filedialog.askdirectory()
-        if dir_name is not "":
+        if dir_name != "" and dir_name is not ():
+            print(dir_name)
             print("name: " + dir_name)
             self.tb.delete("1.0", 'end')
             self.dir_str.set(dir_name)
@@ -248,6 +250,7 @@ class MainApp:
     def commit(self):
         """Commit and alters files names"""
         # Create progress window
+        self.prog_win = ProgressWindow(self.master_ref)
         self.prog_win.set_num_files(len(self.fl_list)+1)
         self.prog_win.show()
         # start thread that handles commit so gui thread can update
@@ -268,6 +271,7 @@ class MainApp:
             # once commited can then write commit to file
             self.file_m.entryconfigure('Save', state='normal')
             # commited names for if save is used
+            del self.prog_win  # remove window
         else:
             self.master_ref.after(100, self.check_prog)
 
