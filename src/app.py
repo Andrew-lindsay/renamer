@@ -347,15 +347,18 @@ class MainApp:
 
     def load_preferences(self):
         """Load setting from yaml file"""
-        if os.path.isfile(os.path.join(os.getcwd(), 'properties.yaml')):
-            with open('properties.yaml', 'r') as prop:
+        pref_file_path = os.path.normpath(os.path.join(os.path.expanduser("~"), '.renamer/properties.yaml'))
+        if os.path.isfile(pref_file_path):
+            with open(pref_file_path, 'r') as prop:
                 obj = yaml.load(prop)
                 return obj
         else:
             # create dictionary
+            if not os.path.isdir(os.path.dirname(pref_file_path)):
+                os.mkdir(os.path.dirname(pref_file_path))
             data = {"colour": '#e0dbdd', "auto_save": 0}
             # write to file
-            with open('properties.yaml', 'w') as prop_new:
+            with open(pref_file_path, 'w') as prop_new:
                 yaml.dump(data, prop_new, default_flow_style=False)
             return data
 
@@ -363,7 +366,8 @@ class MainApp:
         """Write preferences back to the property yaml file"""
         self.settings['auto_save'] = self.auto_save.get()
         self.settings['colour'] = self.bg
-        with open('properties.yaml', 'w') as prop_new:
+        pref_file_path = os.path.normpath(os.path.join(os.path.expanduser("~"), '.renamer/properties.yaml'))
+        with open(pref_file_path, 'w') as prop_new:
             yaml.dump(self.settings, prop_new, default_flow_style=False)
         tkMessageBox.showinfo(title='Settings save', message='Your settings have been saved')
 
